@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { ReaderShell } from "@/app/reader/_components/reader-shell";
 
@@ -22,6 +23,7 @@ export const metadata: Metadata = {
 export default async function ReaderFramePage({
   params,
 }: PageProps<"/reader/[bookId]/frame">) {
+  await connection();
   const { bookId } = await params;
 
   const supabase = await createServerSupabaseClient();

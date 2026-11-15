@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { verifyPaymentRedirect } from "@/lib/momo-verify";
 import { ProtectedViewer } from "@/components/protected-viewer";
@@ -23,6 +24,7 @@ export default async function ReaderPage({
   params,
   searchParams,
 }: PageProps<"/reader/[bookId]">) {
+  await connection();
   const { bookId } = await params;
 
   const supabase = await createServerSupabaseClient();

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 import { BookOpen, ArrowRight } from "lucide-react";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
@@ -13,6 +14,7 @@ export const metadata: Metadata = {
 };
 
 export default async function LibraryPage() {
+  await connection();
   if (!isSupabaseConfigured()) {
     redirect("/login");
   }

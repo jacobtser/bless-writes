@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { connection } from "next/server";
 import { AlertCircle, ArrowRight, ArrowUpRight, CircleAlert } from "lucide-react";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
@@ -18,6 +19,7 @@ export const metadata: Metadata = {
 };
 
 export default async function Home({ searchParams }: PageProps<"/">) {
+  await connection();
   const { canceled, need } = await searchParams;
 
   const demo = !isSupabaseConfigured();
