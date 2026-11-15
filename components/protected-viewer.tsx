@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Lock, WifiOff } from "lucide-react";
+import { ArrowLeft, WifiOff } from "lucide-react";
 import { useInterfaceLockdown } from "@/hooks/use-interface-lockdown";
 
 interface ProtectedViewerProps {
@@ -39,41 +39,34 @@ export function ProtectedViewer({ bookId, title }: ProtectedViewerProps) {
   }, []);
 
   return (
-    <div className="reader-root fixed inset-0 flex flex-col bg-[#171512] text-neutral-200">
-      <header className="reader-hide-for-print flex items-center justify-between gap-3 border-b border-white/10 px-4 py-3">
+    <div className="reader-root fixed inset-0 flex flex-col bg-neutral-100 text-neutral-900">
+      <header className="reader-hide-for-print flex items-center justify-between gap-3 border-b border-neutral-300 bg-white px-3 py-2.5 sm:px-4">
         <Link
-          href="/"
-          className="inline-flex items-center gap-1.5 rounded-full border border-white/10 px-3 py-1.5 text-xs font-medium text-neutral-300 transition hover:bg-white/5 hover:text-white"
+          href="/library"
+          className="inline-flex items-center gap-1.5 rounded-full border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-700 transition hover:bg-neutral-100"
         >
           <ArrowLeft aria-hidden className="h-3.5 w-3.5" />
-          Store
+          Library
         </Link>
 
-        <h1 className="truncate font-display text-sm font-semibold text-neutral-100">
+        <h1 className="min-w-0 flex-1 truncate text-center font-display text-sm font-semibold text-neutral-900">
           {title}
         </h1>
 
-        <div className="flex items-center gap-2">
-          <Link
-            href={`/reader/${bookId}/offline`}
-            className="inline-flex items-center gap-1.5 rounded-full border border-white/10 px-3 py-1.5 text-xs font-medium text-neutral-400 transition hover:bg-white/5 hover:text-white"
-            title="Open the saved offline copy"
-          >
-            <WifiOff aria-hidden className="h-3 w-3" />
-            Offline
-          </Link>
-
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 px-3 py-1.5 text-xs font-medium text-neutral-400">
-            <Lock aria-hidden className="h-3 w-3 text-brass" />
-            Protected reader
-          </span>
-        </div>
+        <Link
+          href={`/reader/${bookId}/offline`}
+          className="inline-flex items-center gap-1.5 rounded-full border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-700 transition hover:bg-neutral-100"
+          title="Open the saved offline copy"
+        >
+          <WifiOff aria-hidden className="h-3 w-3" />
+          <span className="hidden sm:inline">Offline</span>
+        </Link>
       </header>
 
-      <main className="reader-hide-for-print relative flex-1 overflow-hidden">
+      <main className="reader-hide-for-print relative min-h-0 flex-1 overflow-hidden bg-neutral-200">
         <iframe
           src={`/reader/${bookId}/frame`}
-          title={`${title} — protected reader`}
+          title={`${title} — reader`}
           sandbox="allow-scripts allow-same-origin"
           className="h-full w-full border-0"
         />

@@ -72,16 +72,19 @@ export function ReaderShell({
     const page = await pdf.getPage(number);
     const baseViewport = page.getViewport({ scale: 1 });
 
-    // Use as much space as possible, especially on phones, while keeping the page fully visible.
-    const horizontalPadding = stage.clientWidth < 640 ? 12 : 32;
-    const verticalPadding = stage.clientHeight < 700 ? 16 : 40;
-    const maxWidth = Math.max(200, stage.clientWidth - horizontalPadding);
-    const maxHeight = Math.max(240, stage.clientHeight - verticalPadding);
-    const widthScale = maxWidth / baseViewport.width;
-    const heightScale = maxHeight / baseViewport.height;
-    const scale = Math.min(widthScale, heightScale, 2.5);
+    const rect = stage.getBoundingClientRect();
+    const stageW = rect.width || stage.clientWidth || window.innerWidth;
+    const stageH = rect.height || stage.clientHeight || window.innerHeight;
+
+    const isPhone = stageW < 640;
+    const padX = isPhone ? 8 : 24;
+    const padY = isPhone ? 8 : 24;
+    const availableW = Math.max(240, stageW - padX * 2);
+    const availableH = Math.max(280, stageH - padY * 2);
+
+    const scale = Math.min(availableW / baseViewport.width, availableH / baseViewport.height, 3);
     const viewport = page.getViewport({ scale });
-    const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+    const dpr = Math.min(window.devicePixelRatio || 1, 3);
 
     canvas.width = Math.floor(viewport.width * dpr);
     canvas.height = Math.floor(viewport.height * dpr);
@@ -89,7 +92,9 @@ export function ReaderShell({
     canvas.style.height = `${Math.floor(viewport.height)}px`;
 
     renderTaskRef.current?.cancel();
-    const renderTask = page.render({ canvas, viewport });
+    const ctx = canvas.getContext("2d");
+    if (ctx) ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const renderTask = page.render({ canvas, canvasContext: ctx ?? undefined, viewport });
     renderTaskRef.current = renderTask;
     await renderTask.promise;
   }, []);
@@ -133,18 +138,23 @@ export function ReaderShell({
     };
   }, [src]);
 
-  // Re-fit the current page after load, page turns, and window resizes/orientation changes.
+  // Re-fit the current page after load, page turns, window resizes/orientation changes, and layout.
   useEffect(() => {
     let raf = 0;
-    const onResize = () => {
+    const bump = () => {
       cancelAnimationFrame(raf);
       raf = requestAnimationFrame(() => setFitVersion((v) => v + 1));
     };
-    window.addEventListener("resize", onResize);
-    window.addEventListener("orientationchange", onResize);
+    window.addEventListener("resize", bump);
+    window.addEventListener("orientationchange", bump);
+    const ro = typeof ResizeObserver !== "undefined" && stageRef.current ? new ResizeObserver(bump) : null;
+    if (ro && stageRef.current) ro.observe(stageRef.current);
+    // ensure initial layout pass
+    bump();
     return () => {
-      window.removeEventListener("resize", onResize);
-      window.removeEventListener("orientationchange", onResize);
+      window.removeEventListener("resize", bump);
+      window.removeEventListener("orientationchange", bump);
+      ro?.disconnect();
       cancelAnimationFrame(raf);
     };
   }, []);
@@ -171,20 +181,20 @@ export function ReaderShell({
   }, [numPages]);
 
   return (
-    <div className="reader-root fixed inset-0 flex flex-col bg-[#171512] text-neutral-200">
+    <div className="reader-root fixed inset-0 flex flex-col bg-neutral-100 text-neutral-900">
       {preview && (
-        <header className="reader-hide-for-print grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 border-b border-white/10 px-3 py-2.5 sm:gap-4 sm:px-4 sm:py-3">
+        <header className="reader-hide-for-print grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 border-b border-neutral-300 bg-white px-3 py-2.5 text-neutral-900 sm:gap-4 sm:px-4 sm:py-3">
           <Link
             href={backHref}
             aria-label={backLabel}
-            className="inline-flex items-center gap-1.5 rounded-full border border-white/10 px-3 py-1.5 text-xs font-medium text-neutral-300 transition hover:bg-white/5 hover:text-white"
+            className="inline-flex items-center gap-1.5 rounded-full border border-neutral-300 px-3 py-1.5 text-xs font-medium transition hover:bg-neutral-100"
           >
             <ChevronLeft aria-hidden className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">{backLabel}</span>
           </Link>
           <div className="min-w-0 text-center">
-            <p className="truncate font-display text-sm text-neutral-100">{previewTitle}</p>
-            <p className="mt-0.5 truncate text-[9px] font-semibold uppercase tracking-[0.16em] text-brass sm:text-[10px]">
+            <p className="truncate font-display text-sm">{previewTitle}</p>
+            <p className="mt-0.5 truncate text-[9px] font-semibold uppercase tracking-[0.16em] text-neutral-500 sm:text-[10px]">
               {previewLabel}
             </p>
           </div>
@@ -199,10 +209,10 @@ export function ReaderShell({
         </header>
       )}
 
-      <main className="reader-hide-for-print relative flex-1 overflow-hidden">
-        <div ref={stageRef} className="relative h-full w-full">
+      <main className="reader-hide-for-print relative min-h-0 flex-1 overflow-hidden bg-neutral-200">
+        <div ref={stageRef} className="absolute inset-0 flex items-center justify-center overflow-hidden p-1 sm:p-3">
           {status === "loading" && (
-            <div className="flex h-full w-full flex-col items-center justify-center gap-3 text-neutral-400">
+            <div className="flex h-full w-full flex-col items-center justify-center gap-3 text-neutral-600">
               <Loader2 aria-hidden className="h-6 w-6 animate-spin" />
               <p className="text-sm">{preview ? "Building your sample…" : "Opening your book…"}</p>
             </div>
@@ -210,44 +220,36 @@ export function ReaderShell({
 
           {status === "error" && (
             <div className="flex h-full w-full items-center justify-center px-6">
-              <div className="max-w-sm rounded-2xl border border-white/10 bg-white/5 px-6 py-8 text-center">
-                <p className="font-display text-lg text-neutral-100">
+              <div className="max-w-sm rounded-2xl border border-neutral-300 bg-white px-6 py-8 text-center shadow-sm">
+                <p className="font-display text-lg text-neutral-900">
                   {preview ? "This sample cannot be opened" : "This book cannot be opened"}
                 </p>
-                <p className="mt-2 text-sm leading-relaxed text-neutral-400">
+                <p className="mt-2 text-sm leading-relaxed text-neutral-600">
                   {preview
                     ? "The preview is unavailable right now. Please try again later."
-                    : "Your purchase was verified, but the file could not be streamed. Please close and reopen the reader."}
+                    : "Your purchase was verified, but the file could not be opened right now. Please close and reopen the reader."}
                 </p>
-                {errorDetail && (
-                  <p className="mt-3 break-all text-xs text-neutral-500">{errorDetail}</p>
-                )}
               </div>
             </div>
           )}
 
           {status === "ready" && (
-            <div className="flex h-full w-full items-center justify-center overflow-auto p-1 sm:p-3">
-              <div className="relative my-auto">
-                <canvas
-                  ref={canvasRef}
-                  className="block rounded-sm bg-white shadow-2xl ring-1 ring-black/20"
-                />
-                {userEmail && <Watermark email={userEmail} />}
-              </div>
+            <div className="flex h-full w-full items-center justify-center">
+              <canvas
+                ref={canvasRef}
+                className="block h-auto w-auto max-h-full max-w-full bg-white shadow-md"
+              />
             </div>
           )}
 
           {preview && status === "ready" && pageNumber >= numPages && (
-            <div className="absolute inset-x-0 bottom-24 flex justify-center px-6">
-              <div className="max-w-md rounded-2xl border border-white/10 bg-[#211d18]/95 px-6 py-5 text-center shadow-2xl backdrop-blur">
-                <p className="font-display text-base text-neutral-100">That&apos;s the end of the sample</p>
-                <p className="mt-1 text-sm text-neutral-400">
-                  Continue with the full book to read every page.
-                </p>
+            <div className="pointer-events-none absolute inset-x-0 bottom-20 flex justify-center px-4">
+              <div className="pointer-events-auto max-w-md rounded-2xl border border-neutral-300 bg-white/95 px-5 py-4 text-center shadow-lg backdrop-blur">
+                <p className="font-display text-base text-neutral-900">That&apos;s the end of the sample</p>
+                <p className="mt-1 text-sm text-neutral-600">Continue with the full book to read every page.</p>
                 <Link
                   href={purchaseHref}
-                  className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-pine px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-pine-deep"
+                  className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-pine px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-pine-deep"
                 >
                   {purchaseLabel}
                   <ArrowRight aria-hidden className="h-4 w-4" />
@@ -259,23 +261,23 @@ export function ReaderShell({
       </main>
 
       {status === "ready" && (
-        <div className="reader-hide-for-print flex items-center justify-center gap-3 border-t border-white/10 px-4 py-3">
+        <div className="reader-hide-for-print flex items-center justify-center gap-3 border-t border-neutral-300 bg-white px-4 py-2.5 text-neutral-800">
           <button
             onClick={() => setPageNumber((p) => Math.max(1, p - 1))}
             disabled={pageNumber <= 1}
-            className="inline-flex items-center gap-1.5 rounded-full border border-white/10 px-3 py-1.5 text-xs font-medium text-neutral-200 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+            className="inline-flex items-center gap-1.5 rounded-full border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium transition hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-40"
             aria-label="Previous page"
           >
             <ChevronLeft aria-hidden className="h-4 w-4" />
             Prev
           </button>
-          <span className="tabular-nums tracking-wide text-neutral-300" aria-live="polite">
+          <span className="tabular-nums text-sm tracking-wide" aria-live="polite">
             {pageNumber} <span className="text-neutral-500">/ {numPages}</span>
           </span>
           <button
             onClick={() => setPageNumber((p) => Math.min(numPages, p + 1))}
             disabled={pageNumber >= numPages}
-            className="inline-flex items-center gap-1.5 rounded-full border border-white/10 px-3 py-1.5 text-xs font-medium text-neutral-200 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+            className="inline-flex items-center gap-1.5 rounded-full border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium transition hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-40"
             aria-label="Next page"
           >
             Next
@@ -288,20 +290,5 @@ export function ReaderShell({
         Printing is disabled for this eBook.
       </div>
     </div>
-  );
-}
-
-function Watermark({ email }: { email: string }) {
-  return (
-    <div
-      aria-hidden
-      className="pointer-events-none absolute inset-0 select-none"
-      style={{
-        backgroundImage: `url("data:image/svg+xml;utf8,${encodeURIComponent(
-          `<svg xmlns='http://www.w3.org/2000/svg' width='320' height='180'><text x='16' y='100' font-family='sans-serif' font-size='12' fill='rgba(0,0,0,0.10)' transform='rotate(-24 160 90)'>${email}</text></svg>`,
-        )}")`,
-        backgroundRepeat: "repeat",
-      }}
-    />
   );
 }
