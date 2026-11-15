@@ -181,26 +181,26 @@ export function ReaderShell({
   }, [numPages]);
 
   return (
-    <div className="reader-root fixed inset-0 flex flex-col bg-neutral-100 text-neutral-900">
+    <div className="reader-root fixed inset-0 flex flex-col bg-[#f6f4ef] text-neutral-900">
       {preview && (
-        <header className="reader-hide-for-print grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 border-b border-neutral-300 bg-white px-3 py-2.5 text-neutral-900 sm:gap-4 sm:px-4 sm:py-3">
+        <header className="reader-hide-for-print grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 border-b border-neutral-200/80 bg-[#f6f4ef]/95 px-3 py-2 backdrop-blur sm:gap-4 sm:px-5">
           <Link
             href={backHref}
             aria-label={backLabel}
-            className="inline-flex items-center gap-1.5 rounded-full border border-neutral-300 px-3 py-1.5 text-xs font-medium transition hover:bg-neutral-100"
+            className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-xs font-medium text-neutral-700 transition hover:bg-black/5"
           >
-            <ChevronLeft aria-hidden className="h-3.5 w-3.5" />
+            <ChevronLeft aria-hidden className="h-4 w-4" />
             <span className="hidden sm:inline">{backLabel}</span>
           </Link>
           <div className="min-w-0 text-center">
-            <p className="truncate font-display text-sm">{previewTitle}</p>
-            <p className="mt-0.5 truncate text-[9px] font-semibold uppercase tracking-[0.16em] text-neutral-500 sm:text-[10px]">
+            <p className="truncate font-display text-sm text-neutral-900">{previewTitle}</p>
+            <p className="mt-0.5 truncate text-[10px] font-medium uppercase tracking-[0.14em] text-neutral-500">
               {previewLabel}
             </p>
           </div>
           <Link
             href={purchaseHref}
-            className="inline-flex items-center gap-1.5 rounded-full bg-pine px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-pine-deep"
+            className="inline-flex items-center gap-1.5 rounded-full bg-pine px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-pine-deep"
           >
             <span className="hidden sm:inline">{purchaseLabel}</span>
             <span className="sm:hidden">Full book</span>
@@ -209,25 +209,25 @@ export function ReaderShell({
         </header>
       )}
 
-      <main className="reader-hide-for-print relative min-h-0 flex-1 overflow-hidden bg-neutral-200">
-        <div ref={stageRef} className="absolute inset-0 flex items-center justify-center overflow-hidden p-1 sm:p-3">
+      <main className="reader-hide-for-print relative min-h-0 flex-1 overflow-hidden bg-[#eceae3]">
+        <div ref={stageRef} className="absolute inset-0 flex items-center justify-center overflow-hidden p-2 sm:p-6">
           {status === "loading" && (
-            <div className="flex h-full w-full flex-col items-center justify-center gap-3 text-neutral-600">
+            <div className="flex h-full w-full flex-col items-center justify-center gap-3 text-neutral-500">
               <Loader2 aria-hidden className="h-6 w-6 animate-spin" />
-              <p className="text-sm">{preview ? "Building your sample…" : "Opening your book…"}</p>
+              <p className="text-sm font-medium">{preview ? "Opening sample…" : "Opening book…"}</p>
             </div>
           )}
 
           {status === "error" && (
             <div className="flex h-full w-full items-center justify-center px-6">
-              <div className="max-w-sm rounded-2xl border border-neutral-300 bg-white px-6 py-8 text-center shadow-sm">
+              <div className="max-w-sm rounded-2xl border border-neutral-200 bg-white px-6 py-8 text-center shadow-sm">
                 <p className="font-display text-lg text-neutral-900">
-                  {preview ? "This sample cannot be opened" : "This book cannot be opened"}
+                  {preview ? "Sample unavailable" : "Unable to open book"}
                 </p>
                 <p className="mt-2 text-sm leading-relaxed text-neutral-600">
                   {preview
-                    ? "The preview is unavailable right now. Please try again later."
-                    : "Your purchase was verified, but the file could not be opened right now. Please close and reopen the reader."}
+                    ? "The preview could not be loaded right now. Please try again."
+                    : "Please close and reopen the reader."}
                 </p>
               </div>
             </div>
@@ -237,16 +237,16 @@ export function ReaderShell({
             <div className="flex h-full w-full items-center justify-center">
               <canvas
                 ref={canvasRef}
-                className="block h-auto w-auto max-h-full max-w-full bg-white shadow-md"
+                className="block h-auto w-auto max-h-full max-w-full bg-white shadow-[0_8px_30px_rgba(0,0,0,0.12)] ring-1 ring-black/5"
               />
             </div>
           )}
 
           {preview && status === "ready" && pageNumber >= numPages && (
             <div className="pointer-events-none absolute inset-x-0 bottom-20 flex justify-center px-4">
-              <div className="pointer-events-auto max-w-md rounded-2xl border border-neutral-300 bg-white/95 px-5 py-4 text-center shadow-lg backdrop-blur">
-                <p className="font-display text-base text-neutral-900">That&apos;s the end of the sample</p>
-                <p className="mt-1 text-sm text-neutral-600">Continue with the full book to read every page.</p>
+              <div className="pointer-events-auto max-w-md rounded-2xl border border-neutral-200 bg-white/95 px-5 py-4 text-center shadow-lg backdrop-blur">
+                <p className="font-display text-base text-neutral-900">End of sample</p>
+                <p className="mt-1 text-sm text-neutral-600">Continue with the full book to keep reading.</p>
                 <Link
                   href={purchaseHref}
                   className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-pine px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-pine-deep"
@@ -261,27 +261,25 @@ export function ReaderShell({
       </main>
 
       {status === "ready" && (
-        <div className="reader-hide-for-print flex items-center justify-center gap-3 border-t border-neutral-300 bg-white px-4 py-2.5 text-neutral-800">
+        <div className="reader-hide-for-print flex items-center justify-center gap-4 border-t border-neutral-200/80 bg-[#f6f4ef]/95 px-4 py-2 backdrop-blur">
           <button
             onClick={() => setPageNumber((p) => Math.max(1, p - 1))}
             disabled={pageNumber <= 1}
-            className="inline-flex items-center gap-1.5 rounded-full border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium transition hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-40"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full text-neutral-700 transition hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-30"
             aria-label="Previous page"
           >
-            <ChevronLeft aria-hidden className="h-4 w-4" />
-            Prev
+            <ChevronLeft aria-hidden className="h-5 w-5" />
           </button>
-          <span className="tabular-nums text-sm tracking-wide" aria-live="polite">
-            {pageNumber} <span className="text-neutral-500">/ {numPages}</span>
+          <span className="min-w-[4.5rem] text-center text-sm font-medium tabular-nums text-neutral-700" aria-live="polite">
+            {pageNumber} <span className="text-neutral-400">/</span> {numPages}
           </span>
           <button
             onClick={() => setPageNumber((p) => Math.min(numPages, p + 1))}
             disabled={pageNumber >= numPages}
-            className="inline-flex items-center gap-1.5 rounded-full border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium transition hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-40"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full text-neutral-700 transition hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-30"
             aria-label="Next page"
           >
-            Next
-            <ChevronRight aria-hidden className="h-4 w-4" />
+            <ChevronRight aria-hidden className="h-5 w-5" />
           </button>
         </div>
       )}

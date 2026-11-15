@@ -39,14 +39,15 @@ export function ProtectedViewer({ bookId, title }: ProtectedViewerProps) {
   }, []);
 
   return (
-    <div className="reader-root fixed inset-0 flex flex-col bg-neutral-100 text-neutral-900">
-      <header className="reader-hide-for-print flex items-center justify-between gap-3 border-b border-neutral-300 bg-white px-3 py-2.5 sm:px-4">
+    <div className="reader-root fixed inset-0 flex flex-col bg-[#f6f4ef] text-neutral-900">
+      <header className="reader-hide-for-print flex items-center justify-between gap-3 border-b border-neutral-200/80 bg-[#f6f4ef]/95 px-3 py-2 backdrop-blur sm:px-5">
         <Link
           href="/library"
-          className="inline-flex items-center gap-1.5 rounded-full border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-700 transition hover:bg-neutral-100"
+          className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-xs font-medium text-neutral-700 transition hover:bg-black/5"
+          aria-label="Back to library"
         >
-          <ArrowLeft aria-hidden className="h-3.5 w-3.5" />
-          Library
+          <ArrowLeft aria-hidden className="h-4 w-4" />
+          <span className="hidden sm:inline">Library</span>
         </Link>
 
         <h1 className="min-w-0 flex-1 truncate text-center font-display text-sm font-semibold text-neutral-900">
@@ -55,15 +56,15 @@ export function ProtectedViewer({ bookId, title }: ProtectedViewerProps) {
 
         <Link
           href={`/reader/${bookId}/offline`}
-          className="inline-flex items-center gap-1.5 rounded-full border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-700 transition hover:bg-neutral-100"
-          title="Open the saved offline copy"
+          className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-xs font-medium text-neutral-700 transition hover:bg-black/5"
+          title="Open offline copy"
         >
-          <WifiOff aria-hidden className="h-3 w-3" />
+          <WifiOff aria-hidden className="h-4 w-4" />
           <span className="hidden sm:inline">Offline</span>
         </Link>
       </header>
 
-      <main className="reader-hide-for-print relative min-h-0 flex-1 overflow-hidden bg-neutral-200">
+      <main className="reader-hide-for-print relative min-h-0 flex-1 overflow-hidden bg-[#eceae3]">
         <iframe
           src={`/reader/${bookId}/frame`}
           title={`${title} — reader`}
