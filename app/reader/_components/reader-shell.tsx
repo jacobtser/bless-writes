@@ -72,11 +72,16 @@ export function ReaderShell({
     const page = await pdf.getPage(number);
     const baseViewport = page.getViewport({ scale: 1 });
 
-    const maxWidth = Math.max(260, stage.clientWidth - 48);
-    const maxHeight = Math.max(320, stage.clientHeight - 96);
-    const scale = Math.min(maxWidth / baseViewport.width, maxHeight / baseViewport.height, 1.6);
+    // Use as much space as possible, especially on phones, while keeping the page fully visible.
+    const horizontalPadding = stage.clientWidth < 640 ? 12 : 32;
+    const verticalPadding = stage.clientHeight < 700 ? 16 : 40;
+    const maxWidth = Math.max(200, stage.clientWidth - horizontalPadding);
+    const maxHeight = Math.max(240, stage.clientHeight - verticalPadding);
+    const widthScale = maxWidth / baseViewport.width;
+    const heightScale = maxHeight / baseViewport.height;
+    const scale = Math.min(widthScale, heightScale, 2.5);
     const viewport = page.getViewport({ scale });
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
 
     canvas.width = Math.floor(viewport.width * dpr);
     canvas.height = Math.floor(viewport.height * dpr);
@@ -128,7 +133,7 @@ export function ReaderShell({
     };
   }, [src]);
 
-  // Re-fit the current page after load, page turns, and window resizes.
+  // Re-fit the current page after load, page turns, and window resizes/orientation changes.
   useEffect(() => {
     let raf = 0;
     const onResize = () => {
@@ -136,8 +141,10 @@ export function ReaderShell({
       raf = requestAnimationFrame(() => setFitVersion((v) => v + 1));
     };
     window.addEventListener("resize", onResize);
+    window.addEventListener("orientationchange", onResize);
     return () => {
       window.removeEventListener("resize", onResize);
+      window.removeEventListener("orientationchange", onResize);
       cancelAnimationFrame(raf);
     };
   }, []);
@@ -220,11 +227,11 @@ export function ReaderShell({
           )}
 
           {status === "ready" && (
-            <div className="flex h-full w-full items-center justify-center p-3 sm:p-6">
-              <div className="relative">
+            <div className="flex h-full w-full items-center justify-center overflow-auto p-1 sm:p-3">
+              <div className="relative my-auto">
                 <canvas
                   ref={canvasRef}
-                  className="rounded-sm bg-white shadow-2xl ring-1 ring-black/20"
+                  className="block rounded-sm bg-white shadow-2xl ring-1 ring-black/20"
                 />
                 {userEmail && <Watermark email={userEmail} />}
               </div>
