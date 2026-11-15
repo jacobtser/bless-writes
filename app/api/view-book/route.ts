@@ -70,16 +70,17 @@ export async function GET(request: NextRequest) {
   }
 
   // Refuse anything that isn't our own reader frame: not a top-level
-  // navigation, not a cross-site caller, and the Referer must live under
-  // /reader/. A purchaser cannot paste this URL into a browser tab.
+  // navigation, not a cross-site caller. Prefer a Referer under /reader/,
+  // but allow same-origin fetches without Referer as a fallback.
   const referer = request.headers.get("referer");
   const refererMatches = referer ? isReaderReferer(referer) : false;
   const fetchDestination = request.headers.get("sec-fetch-dest");
   const fetchSite = request.headers.get("sec-fetch-site");
   const isTopLevelNavigation = fetchDestination === "document";
   const isCrossSite = fetchDestination === "cross-site" || fetchSite === "cross-site";
+  const isSameOriginFetch = fetchSite === "same-origin" && !isTopLevelNavigation;
 
-  if (!refererMatches || isTopLevelNavigation || isCrossSite) {
+  if (isTopLevelNavigation || isCrossSite || !(refererMatches || isSameOriginFetch)) {
     return NextResponse.json({ error: "Forbidden." }, { status: 403 });
   }
 

@@ -94,11 +94,12 @@ const nextConfig: NextConfig = {
       },
       {
         // The protected reader may only be framed on its own origin.
+        // same-origin referrer is required so /api/view-book can verify requests come from the reader.
         source: "/reader/:path*",
         headers: [
           { key: "X-Frame-Options", value: "SAMEORIGIN" },
           { key: "X-Content-Type-Options", value: "nosniff" },
-          { key: "Referrer-Policy", value: "no-referrer" },
+          { key: "Referrer-Policy", value: "same-origin" },
         ],
       },
       {
