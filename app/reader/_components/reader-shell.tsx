@@ -58,6 +58,7 @@ export function ReaderShell({
   const renderTaskRef = useRef<{ cancel: () => void } | null>(null);
 
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
+  const [errorDetail, setErrorDetail] = useState<string | null>(null);
   const [numPages, setNumPages] = useState(0);
   const [pageNumber, setPageNumber] = useState(1);
   const [fitVersion, setFitVersion] = useState(0);
@@ -109,6 +110,8 @@ export function ReaderShell({
         // when the reader unmounts; only report genuine failures.
         if (cancelled) return;
         console.error("[reader] failed to open document:", error);
+        const message = error instanceof Error ? error.message : String(error);
+        setErrorDetail(message);
         setStatus("error");
       }
     }
@@ -209,6 +212,9 @@ export function ReaderShell({
                     ? "The preview is unavailable right now. Please try again later."
                     : "Your purchase was verified, but the file could not be streamed. Please close and reopen the reader."}
                 </p>
+                {errorDetail && (
+                  <p className="mt-3 break-all text-xs text-neutral-500">{errorDetail}</p>
+                )}
               </div>
             </div>
           )}
