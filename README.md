@@ -226,7 +226,25 @@ Upload the PDF to `ebooks/<book-id>.pdf` and the result appears in the store.
 
 ---
 
-## 10. Offline reading (PWA)
+## 10. Installable app and offline reading (PWA)
+
+### Install as an app
+
+The storefront ships a web app manifest (`app/manifest.ts`), regular and
+maskable PNG icons in `public/icons/`, iOS home-screen metadata, and a small
+install prompt (`components/install-app.tsx`). Once deployed over HTTPS:
+
+- **Android, Chrome, Edge** — accept the browser install prompt, or use the
+  in-app **Install app** nudge. The app opens straight into `/` in a standalone
+  window, without the browser chrome.
+- **iPhone / iPad** — open the site in Safari, tap **Share**, then **Add to
+  Home Screen**.
+- **Desktop Safari** — **File → Add to Dock**.
+
+The service worker (`public/sw.js`) precaches the app shell and icons, so the
+installed app launches quickly and falls back to `/offline` when disconnected.
+
+### Offline reading
 
 Purchased books can be saved to the device and read with **no network
 connection**. The offline copy is never written to disk as plaintext.
@@ -270,6 +288,7 @@ app/
   login/                              Sign in / sign up
   offline/page.tsx                    Offline fallback shell (SW-cached)
   manifest.ts                         PWA manifest (/manifest.webmanifest)
+  layout.tsx                          App metadata + install prompt mount
   reader/[bookId]/page.tsx            Server gate + MoMo redirect verification
   reader/[bookId]/frame/page.tsx      Sandboxed reader frame (server gate)
   reader/[bookId]/offline/page.tsx    Entitlement gate for the offline reader
@@ -283,6 +302,7 @@ components/
   offline-reader.tsx                  Full-screen offline reader
   save-offline-button.tsx             "Save offline" control (loadChapters seam)
   pwa-register.tsx                    Service-worker registration + online state
+  install-app.tsx                     Install prompt (Chromium + iOS instructions)
 lib/
   lib/
     offline/crypto.ts                   AES-256-CBC + HMAC-SHA-256 (encrypt-then-MAC)
@@ -299,6 +319,8 @@ hooks/
   use-offline-reader.ts               Offline reader hook (decrypt + navigate)
   use-offline-library.ts              List / remove device-saved books
 public/sw.js                          Service worker (app-shell cache, API bypass)
+public/icons/                         Install + home-screen icons (regular/maskable)
+public/icon.svg                       Vector source for the app icons
 public/covers/                        Bundled cover images for the two books
 supabase/schema.sql                   Tables, RLS, storage policies
 supabase/seed.sql                     Real book catalog

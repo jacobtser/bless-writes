@@ -13,19 +13,40 @@
  * Bump CACHE_VERSION on any change to invalidate old caches on activate.
  */
 
-const CACHE_VERSION = "v3";
+const CACHE_VERSION = "v4";
 const STATIC_CACHE = `bless-static-${CACHE_VERSION}`;
 const PAGES_CACHE = `bless-pages-${CACHE_VERSION}`;
 const OFFLINE_URL = "/offline";
 
-const PRECACHE_URLS = [OFFLINE_URL, "/manifest.webmanifest", "/icon.svg"];
+const PRECACHE_URLS = [
+  OFFLINE_URL,
+  "/manifest.webmanifest",
+  "/icon.svg",
+  "/icons/icon-192.png",
+  "/icons/icon-512.png",
+  "/icons/maskable-192.png",
+  "/icons/maskable-512.png",
+  "/icons/apple-touch-icon.png",
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches
-      .open(PAGES_CACHE)
-      .then((cache) => cache.addAll(PRECACHE_URLS))
-      .then(() => self.skipWaiting()),
+    (async () => {
+      const cache = await caches.open(PAGES_CACHE);
+      // Cache each shell asset independently: one missing icon must never stop
+      // the worker from installing and making the app launchable.
+      await Promise.all(
+        PRECACHE_URLS.map(async (url) => {
+          try {
+            const response = await fetch(new Request(url, { cache: "reload" }));
+            if (response.ok) await cache.put(url, response);
+          } catch {
+            /* best-effort precache */
+          }
+        }),
+      );
+      await self.skipWaiting();
+    })(),
   );
 });
 
@@ -59,6 +80,13 @@ self.addEventListener("fetch", (event) => {
   // Navigations: network-first, with an offline shell fallback.
   if (request.mode === "navigate") {
     event.respondWith(handleNavigate(request));
+    return;
+  }
+
+  // The manifest is stable but updated on deploy: refresh it when online and
+  // fall back to the precached copy when not.
+  if (url.pathname === "/manifest.webmanifest") {
+    event.respondWith(networkFirst(request, PAGES_CACHE));
     return;
   }
 

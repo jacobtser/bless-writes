@@ -58,6 +58,28 @@ body {
   background: color-mix(in srgb, var(--brass) 30%, transparent);
 }
 
+/* The install nudge rises in gently rather than popping over the page. */
+@keyframes install-nudge-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.install-nudge {
+  animation: install-nudge-rise 360ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .install-nudge {
+    animation: none;
+  }
+}
+
 /* ============================================================
    Protected reader helpers
    Used by both the outer reader page and the sandboxed frame.

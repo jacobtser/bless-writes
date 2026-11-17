@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Fraunces, Source_Serif_4 } from "next/font/google";
+import { InstallApp } from "@/components/install-app";
 import { PwaRegister } from "@/components/pwa-register";
 import "./globals.css";
 
@@ -26,6 +27,7 @@ const sourceSerif = Source_Serif_4({
 });
 
 export const metadata: Metadata = {
+  applicationName: "Bless Writes",
   title: {
     default: "Bless Writes — Books by Bless Laweh Koranteng",
     template: "%s · Bless Writes",
@@ -34,6 +36,31 @@ export const metadata: Metadata = {
     "The memoirs of Ghanaian author Bless Laweh Koranteng: Faith Beyond My Resources and From a Five-Cedi Mat to First Class. Read an excerpt, then continue in the full edition.",
   authors: [{ name: "Bless Laweh Koranteng" }],
   creator: "Bless Laweh Koranteng",
+  // Installing from iOS uses these tags rather than the manifest alone.
+  appleWebApp: {
+    capable: true,
+    title: "Bless Writes",
+    statusBarStyle: "default",
+  },
+  // Next 16 emits the newer `mobile-web-app-capable` tag. Keep Apple's
+  // historical spelling too so older iOS versions also launch standalone.
+  other: {
+    "apple-mobile-web-app-capable": "yes",
+  },
+  icons: {
+    icon: [
+      { url: "/icon.svg", sizes: "any", type: "image/svg+xml" },
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [
+      {
+        url: "/icons/apple-touch-icon.png",
+        sizes: "180x180",
+        type: "image/png",
+      },
+    ],
+  },
 };
 
 export const viewport: Viewport = {
@@ -50,6 +77,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
         <PwaRegister />
         {children}
+        <InstallApp />
       </body>
     </html>
   );
